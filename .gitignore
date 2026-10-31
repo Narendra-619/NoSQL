@@ -1,0 +1,14 @@
+.env
+.env.local
+.env.*.local
+backend/.venv/
+**/__pycache__/
+.pytest_cache/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.log
+.DS_Store
+.idea/
+.vscode/
+docs/screenshots/*.tmp.png

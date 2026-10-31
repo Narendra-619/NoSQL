@@ -1,0 +1,169 @@
+{
+  "generated_at": "2026-10-31T08:04:42.850150+00:00",
+  "operation": "Student pass/fail aggregation for one department and one semester (100 students, 500 subject rows in Cassandra).",
+  "environment": {
+    "label": "local MongoDB + local Cassandra (development validation)",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.2",
+    "mongo_network": "loopback",
+    "cassandra_network": "loopback",
+    "iterations": 30,
+    "warmup_iterations": 8,
+    "sample_count": 600
+  },
+  "mongo": {
+    "median_ms": 5.299,
+    "p95_ms": 11.354,
+    "min_ms": 2.446,
+    "max_ms": 35.97
+  },
+  "cassandra": {
+    "median_ms": 30.409,
+    "p95_ms": 59.563,
+    "min_ms": 12.108,
+    "max_ms": 629.024
+  },
+  "cassandra_to_mongo_median_ratio": 5.74,
+  "verified_aggregations": [
+    {
+      "department_code": "CSE",
+      "semester": 1,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "ECE",
+      "semester": 1,
+      "students": 100,
+      "pass": 93,
+      "fail": 7
+    },
+    {
+      "department_code": "EEE",
+      "semester": 1,
+      "students": 100,
+      "pass": 97,
+      "fail": 3
+    },
+    {
+      "department_code": "MECH",
+      "semester": 1,
+      "students": 100,
+      "pass": 92,
+      "fail": 8
+    },
+    {
+      "department_code": "CIVIL",
+      "semester": 1,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "CSE",
+      "semester": 2,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "ECE",
+      "semester": 2,
+      "students": 100,
+      "pass": 93,
+      "fail": 7
+    },
+    {
+      "department_code": "EEE",
+      "semester": 2,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "MECH",
+      "semester": 2,
+      "students": 100,
+      "pass": 98,
+      "fail": 2
+    },
+    {
+      "department_code": "CIVIL",
+      "semester": 2,
+      "students": 100,
+      "pass": 95,
+      "fail": 5
+    },
+    {
+      "department_code": "CSE",
+      "semester": 3,
+      "students": 100,
+      "pass": 95,
+      "fail": 5
+    },
+    {
+      "department_code": "ECE",
+      "semester": 3,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "EEE",
+      "semester": 3,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "MECH",
+      "semester": 3,
+      "students": 100,
+      "pass": 100,
+      "fail": 0
+    },
+    {
+      "department_code": "CIVIL",
+      "semester": 3,
+      "students": 100,
+      "pass": 95,
+      "fail": 5
+    },
+    {
+      "department_code": "CSE",
+      "semester": 4,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "ECE",
+      "semester": 4,
+      "students": 100,
+      "pass": 94,
+      "fail": 6
+    },
+    {
+      "department_code": "EEE",
+      "semester": 4,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "MECH",
+      "semester": 4,
+      "students": 100,
+      "pass": 96,
+      "fail": 4
+    },
+    {
+      "department_code": "CIVIL",
+      "semester": 4,
+      "students": 100,
+      "pass": 93,
+      "fail": 7
+    }
+  ]
+}

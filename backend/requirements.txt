@@ -1,0 +1,8 @@
+fastapi==0.125.0
+uvicorn[standard]==0.38.0
+pydantic==2.12.5
+pydantic-settings==2.12.0
+pymongo==4.19.0
+cassandra-driver==3.30.1
+pyasyncore==1.0.5
+python-dotenv==1.1.1

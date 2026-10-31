@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f3f0e8;
+  --color-surface: #fcfbf7;
+  --color-surface-2: #ece8dd;
+  --color-ink: #1b1b17;
+  --color-ink-soft: #3f3e37;
+  --color-muted: #6f6c62;
+  --color-line: #d8d1c3;
+  --color-line-strong: #bdb4a3;
+  --color-forest: #1e4a3a;
+  --color-forest-deep: #143428;
+  --color-forest-soft: #dfe9e2;
+  --color-success: #2f6b52;
+  --color-danger: #963b2e;
+  --color-danger-soft: #f3e2dd;
+  --color-warning: #8a6322;
+
+  --font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background:
+      radial-gradient(75rem 32rem at 82% -8%, rgba(30, 74, 58, 0.055), transparent 62%),
+      var(--color-paper);
+  }
+
+  ::selection {
+    background: var(--color-forest);
+    color: var(--color-paper);
+  }
+
+  a,
+  button,
+  input,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  select {
+    font: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-forest);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .wrap {
+    width: 100%;
+    max-width: 78rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .wrap {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  .label {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.12em;
+    line-height: 1.3;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  th.label {
+    display: table-cell;
+    vertical-align: middle;
+  }
+
+  .skip-link {
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    z-index: 100;
+    transform: translateY(-200%);
+    border-radius: 0.25rem;
+    background: var(--color-forest);
+    padding: 0.65rem 1rem;
+    color: var(--color-paper);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: transform 150ms ease;
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
+  .rule-top {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .page-enter {
+    animation: page-enter 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .bar-track {
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-surface-2);
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-forest);
+  }
+
+  .bar-fill-danger {
+    background: var(--color-danger);
+  }
+
+  .skeleton {
+    border-radius: 0.25rem;
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-2) 25%,
+      #f5f2ea 50%,
+      var(--color-surface-2) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .material {
+    background: var(--color-paper) !important;
+    backdrop-filter: none !important;
+  }
+}
