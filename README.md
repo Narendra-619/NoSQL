@@ -10,9 +10,7 @@ A dual-database academic records platform for institution-wide analytics, depart
 ![MongoDB](https://img.shields.io/badge/MongoDB-document%20store-47A248?logo=mongodb&logoColor=white)
 ![Cassandra](https://img.shields.io/badge/Apache%20Cassandra-5.0-1287B1?logo=apachecassandra&logoColor=white)
 
-<p align="center">
-  <img src="docs/screenshots/home.png" alt="Academic Ledger landing page" width="100%">
-</p>
+
 
 ## Overview
 
