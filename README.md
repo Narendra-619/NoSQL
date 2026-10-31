@@ -27,6 +27,7 @@ The result is a system that supports fast institutional dashboards without weake
 
 - [Features](#features)
 - [Architecture](#architecture)
+- [Querying the data](#querying-the-data)
 - [Technology stack](#technology-stack)
 - [Repository structure](#repository-structure)
 - [Getting started](#getting-started)
@@ -91,7 +92,187 @@ Cassandra is query-first and denormalised:
 - `results_by_student_semester` — partition key `((student_id), semester, subject_code)` for one student's full or semester-specific history.
 - `results_by_department_semester` — partition key `((department_code, semester), subject_code, result_status, roll_number)` for department, subject, and failure-list queries.
 
-See [schema and queries](docs/schema-and-queries.md) for CQL, indexes, and aggregation examples.
+See [schema and queries](docs/schema-and-queries.md) for the full schema, CQL, indexes, and aggregation notes.
+
+## Querying the data
+
+The application chooses the store based on the query shape. It does not join MongoDB and Cassandra inside a database engine; the service layer composes the result.
+
+| User question | Primary store | Access pattern |
+| --- | --- | --- |
+| Which students match these dashboard filters? | MongoDB | Filter and sort pre-aggregated `student_semester_summaries`; merge identity fields after pagination |
+| What are the semester metrics for a department? | MongoDB | `$match` on semester and department, then `$group` the summaries |
+| What are this student's semester summaries? | MongoDB | Unique `(student_id, semester)` index on the summaries collection |
+| Which subjects did this student take? | Cassandra | One bounded read of the student's partition |
+| Which students failed a subject? | Cassandra | One partition read for `(department_code, semester)`, then filter by subject and `FAIL` |
+| What changed in the admin workflow? | MongoDB | `admin_audit_log`, newest first |
+
+### MongoDB examples
+
+The UUID shown in the examples is a placeholder; use a real `student_id` from the `students` collection.
+
+Connect to the database:
+
+```javascript
+mongosh
+use academic_system
+```
+
+#### Filtered, paginated student register
+
+```javascript
+const page = db.student_semester_summaries.aggregate([
+  {
+    $match: {
+      semester: 4,
+      department_code: "CSE",
+      cgpa: { $gte: 8.0 },
+      backlog_count: 0,
+      result_status: "PASS"
+    }
+  },
+  { $sort: { cgpa: -1, roll_number: 1 } },
+  {
+    $facet: {
+      metadata: [{ $count: "total" }],
+      items: [{ $skip: 0 }, { $limit: 25 }]
+    }
+  }
+]).toArray()[0];
+
+const studentIds = page.items.map((item) => item.student_id);
+db.students.find(
+  { _id: { $in: studentIds } },
+  { roll_number: 1, name: 1, department_code: 1, section: 1 }
+);
+```
+
+The first pipeline reads only summaries and returns both the total count and the requested page in one round trip. The second query fetches identity fields for the 25 selected students. The API performs the same two-step composition in `StudentRepository.list_students()`.
+
+The semester/department/CGPA/backlog/status index supports this access pattern:
+
+```text
+semester_department_cgpa_backlog_status
+  (semester, department_code, cgpa, backlog_count, result_status)
+```
+
+#### Department overview
+
+```javascript
+db.student_semester_summaries.aggregate([
+  { $match: { semester: 4, department_code: "CSE" } },
+  {
+    $group: {
+      _id: null,
+      student_count: { $sum: 1 },
+      pass_count: {
+        $sum: { $cond: [{ $eq: ["$result_status", "PASS"] }, 1, 0] }
+      },
+      average_cgpa: { $avg: "$cgpa" },
+      students_with_backlogs: {
+        $sum: { $cond: [{ $gt: ["$backlog_count", 0] }, 1, 0] }
+      },
+      average_backlogs: { $avg: "$backlog_count" }
+    }
+  }
+]);
+```
+
+The service derives `fail_count` as `student_count - pass_count`. No separate failure count is stored in MongoDB.
+
+#### One student's semester history
+
+```javascript
+db.student_semester_summaries.find(
+  { student_id: "123e4567-e89b-12d3-a456-426614174000" },
+  {
+    semester: 1,
+    sgpa: 1,
+    cgpa: 1,
+    backlog_count: 1,
+    result_status: 1
+  }
+).sort({ semester: 1 });
+```
+
+This read uses the unique `uniq_student_semester` index on `(student_id, semester)`.
+
+### Cassandra examples
+
+Connect with `cqlsh`:
+
+```bash
+cqlsh 127.0.0.1 9042 -k academic_system
+```
+
+#### Student result partition
+
+```sql
+SELECT semester, subject_code, subject_name, credits,
+       total_marks, grade, result_status
+FROM results_by_student_semester
+WHERE student_id = 123e4567-e89b-12d3-a456-426614174000;
+```
+
+A student has at most 20 subject rows across four semesters, so this is one bounded partition read.
+
+#### One semester for one student
+
+```sql
+SELECT subject_code, subject_name, internal_marks, external_marks,
+       total_marks, grade, result_status
+FROM results_by_student_semester
+WHERE student_id = 123e4567-e89b-12d3-a456-426614174000
+  AND semester = 4;
+```
+
+#### Department results and failure list
+
+```sql
+SELECT subject_code, result_status, roll_number, student_name,
+       total_marks, grade
+FROM results_by_department_semester
+WHERE department_code = 'CSE'
+  AND semester = 4;
+```
+
+```sql
+SELECT subject_code, roll_number, student_name, total_marks, grade
+FROM results_by_department_semester
+WHERE department_code = 'CSE'
+  AND semester = 4
+  AND subject_code = 'CS404'
+  AND result_status = 'FAIL';
+```
+
+Every Cassandra query supplies the full partition key. The application does not use `ALLOW FILTERING`; department and failure views stay inside the `(department_code, semester)` partition.
+
+### API query examples
+
+The same queries are exposed through the HTTP API. Start the backend first, then run:
+
+```bash
+# College-wide Semester 4 overview
+curl "http://127.0.0.1:8000/api/analytics/overview?semester=4"
+
+# CSE register: CGPA at least 8.0, no current backlog, sorted by CGPA
+curl "http://127.0.0.1:8000/api/students?semester=4&department=CSE&cgpa_min=8.0&backlog_max=0&status=PASS&sort=cgpa_desc&page=1&page_size=10"
+
+# One student's identity and semester summaries
+curl "http://127.0.0.1:8000/api/students/<student-uuid>"
+
+# One student's subject-level results from Cassandra
+curl "http://127.0.0.1:8000/api/students/<student-uuid>/results?semester=4"
+
+# Failed results for CS404 in CSE Semester 4
+curl "http://127.0.0.1:8000/api/results/failures?department=CSE&semester=4&subject=CS404"
+
+# Admin audit history (export ADMIN_ACCESS_KEY with the same value as .env)
+curl -H "X-Admin-Key: $ADMIN_ACCESS_KEY" \
+  "http://127.0.0.1:8000/api/admin/audit?limit=10"
+```
+
+FastAPI validates semester values (1–4), page bounds, CGPA (0–10), backlog count (0–10), status, and sort order before the repository is called. Interactive documentation is available at `http://127.0.0.1:8000/docs`.
 
 ## Technology stack
 
